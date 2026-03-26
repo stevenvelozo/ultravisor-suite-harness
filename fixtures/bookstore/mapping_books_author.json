@@ -1,0 +1,12 @@
+{
+	"Entity": "Author",
+	"MultipleGUIDUniqueness": true,
+	"Solvers": [
+		"NewRecordsGUIDUniqueness = STRINGGETSEGMENTS(IncomingRecord.authors,\",\")"
+	],
+	"GUIDTemplate": "Author_{~PascalCaseIdentifier:Record._GUIDUniqueness~}",
+	"Mappings":
+	{
+		"Name": "{~D:Record._GUIDUniqueness~}"
+	}
+}

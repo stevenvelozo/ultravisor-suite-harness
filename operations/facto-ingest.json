@@ -1,0 +1,172 @@
+{
+	"Hash": "facto-ingest",
+	"Name": "Facto Data Ingest",
+	"Description": "Ingests pre-parsed records into Facto. Creates Source, Dataset, IngestJob entities and bulk-creates Records via beacon-dispatched FactoData actions. Parameters: DatasetName, Records[].",
+	"Tags": ["facto", "ingest", "beacon"],
+	"Author": "Ultravisor",
+	"Version": "2.0.0",
+	"Graph": {
+		"Nodes": [
+			{
+				"Hash": "start",
+				"Type": "start",
+				"X": 50,
+				"Y": 200,
+				"Width": 140,
+				"Height": 80,
+				"Title": "Start",
+				"Ports": [
+					{ "Hash": "start-out", "Direction": "output", "Side": "right-bottom", "Label": "Out" }
+				],
+				"Data": {}
+			},
+			{
+				"Hash": "create-source",
+				"Type": "beacon-factodata-createsource",
+				"X": 250,
+				"Y": 180,
+				"Width": 220,
+				"Height": 120,
+				"Title": "Create Source",
+				"Ports": [
+					{ "Hash": "create-source-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "create-source-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "create-source-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "create-source-Result", "Direction": "output", "Side": "right-top", "Label": "Result" }
+				],
+				"Data": {
+					"Name": "{~D:Record.Operation.DatasetName~}",
+					"Type": "HarnessDataset"
+				}
+			},
+			{
+				"Hash": "create-dataset",
+				"Type": "beacon-factodata-createdataset",
+				"X": 530,
+				"Y": 180,
+				"Width": 220,
+				"Height": 120,
+				"Title": "Create Dataset",
+				"Ports": [
+					{ "Hash": "create-dataset-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "create-dataset-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "create-dataset-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "create-dataset-Result", "Direction": "output", "Side": "right-top", "Label": "Result" }
+				],
+				"Data": {
+					"Name": "{~D:Record.Operation.DatasetName~}",
+					"Type": "HarnessIngest"
+				}
+			},
+			{
+				"Hash": "create-job",
+				"Type": "beacon-factodata-createingestjob",
+				"X": 810,
+				"Y": 180,
+				"Width": 220,
+				"Height": 120,
+				"Title": "Create IngestJob",
+				"Ports": [
+					{ "Hash": "create-job-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "create-job-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "create-job-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "create-job-Result", "Direction": "output", "Side": "right-top", "Label": "Result" }
+				],
+				"Data": {
+					"IDSource": "{~D:Record.TaskOutput.create-source.Created.IDSource~}",
+					"IDDataset": "{~D:Record.TaskOutput.create-dataset.Created.IDDataset~}",
+					"Status": "Running"
+				}
+			},
+			{
+				"Hash": "bulk-create",
+				"Type": "beacon-factodata-bulkcreaterecords",
+				"X": 1090,
+				"Y": 180,
+				"Width": 240,
+				"Height": 120,
+				"Title": "Bulk Create Records",
+				"Ports": [
+					{ "Hash": "bulk-create-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "bulk-create-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "bulk-create-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "bulk-create-Result", "Direction": "output", "Side": "right-top", "Label": "Result" }
+				],
+				"Data": {
+					"Records": "{~D:Record.Operation.Records~}",
+					"IDDataset": "{~D:Record.TaskOutput.create-dataset.Created.IDDataset~}",
+					"IDSource": "{~D:Record.TaskOutput.create-source.Created.IDSource~}"
+				}
+			},
+			{
+				"Hash": "update-job",
+				"Type": "beacon-factodata-updateingestjob",
+				"X": 1390,
+				"Y": 180,
+				"Width": 240,
+				"Height": 120,
+				"Title": "Finalize IngestJob",
+				"Ports": [
+					{ "Hash": "update-job-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "update-job-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "update-job-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "update-job-Result", "Direction": "output", "Side": "right-top", "Label": "Result" }
+				],
+				"Data": {
+					"IDIngestJob": "{~D:Record.TaskOutput.create-job.Created.IDIngestJob~}",
+					"Status": "Complete",
+					"RecordsProcessed": "{~D:Record.TaskOutput.bulk-create.Count~}",
+					"RecordsCreated": "{~D:Record.TaskOutput.bulk-create.Count~}"
+				}
+			},
+			{
+				"Hash": "error-handler",
+				"Type": "error-message",
+				"X": 700,
+				"Y": 450,
+				"Width": 200,
+				"Height": 80,
+				"Title": "Error Handler",
+				"Ports": [
+					{ "Hash": "error-handler-Execute", "Direction": "input", "Side": "left-bottom", "Label": "Execute" },
+					{ "Hash": "error-handler-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" }
+				],
+				"Data": {
+					"Message": "Facto ingest operation encountered an error."
+				}
+			},
+			{
+				"Hash": "end",
+				"Type": "end",
+				"X": 1700,
+				"Y": 200,
+				"Width": 140,
+				"Height": 80,
+				"Title": "End",
+				"Ports": [
+					{ "Hash": "end-in", "Direction": "input", "Side": "left-bottom", "Label": "In" }
+				],
+				"Data": {}
+			}
+		],
+		"Connections": [
+			{ "SourceNodeHash": "start",         "SourcePortHash": "start-out",                "TargetNodeHash": "create-source",  "TargetPortHash": "create-source-Trigger" },
+			{ "SourceNodeHash": "create-source",  "SourcePortHash": "create-source-Complete",  "TargetNodeHash": "create-dataset", "TargetPortHash": "create-dataset-Trigger" },
+			{ "SourceNodeHash": "create-source",  "SourcePortHash": "create-source-Error",     "TargetNodeHash": "error-handler",  "TargetPortHash": "error-handler-Execute" },
+			{ "SourceNodeHash": "create-dataset", "SourcePortHash": "create-dataset-Complete", "TargetNodeHash": "create-job",     "TargetPortHash": "create-job-Trigger" },
+			{ "SourceNodeHash": "create-dataset", "SourcePortHash": "create-dataset-Error",    "TargetNodeHash": "error-handler",  "TargetPortHash": "error-handler-Execute" },
+			{ "SourceNodeHash": "create-job",     "SourcePortHash": "create-job-Complete",     "TargetNodeHash": "bulk-create",    "TargetPortHash": "bulk-create-Trigger" },
+			{ "SourceNodeHash": "create-job",     "SourcePortHash": "create-job-Error",        "TargetNodeHash": "error-handler",  "TargetPortHash": "error-handler-Execute" },
+			{ "SourceNodeHash": "bulk-create",    "SourcePortHash": "bulk-create-Complete",    "TargetNodeHash": "update-job",     "TargetPortHash": "update-job-Trigger" },
+			{ "SourceNodeHash": "bulk-create",    "SourcePortHash": "bulk-create-Error",       "TargetNodeHash": "error-handler",  "TargetPortHash": "error-handler-Execute" },
+			{ "SourceNodeHash": "update-job",     "SourcePortHash": "update-job-Complete",     "TargetNodeHash": "end",            "TargetPortHash": "end-in" },
+			{ "SourceNodeHash": "update-job",     "SourcePortHash": "update-job-Error",        "TargetNodeHash": "error-handler",  "TargetPortHash": "error-handler-Execute" },
+			{ "SourceNodeHash": "error-handler",  "SourcePortHash": "error-handler-Complete",  "TargetNodeHash": "end",            "TargetPortHash": "end-in" }
+		]
+	},
+	"ViewState": {
+		"X": 0,
+		"Y": 0,
+		"Scale": 1
+	}
+}

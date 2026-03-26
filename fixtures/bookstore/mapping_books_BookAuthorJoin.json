@@ -1,0 +1,13 @@
+{
+	"Entity": "BookAuthorJoin",
+	"MultipleGUIDUniqueness": true,
+	"Solvers": [
+		"NewRecordsGUIDUniqueness = STRINGGETSEGMENTS(IncomingRecord.authors,\",\")"
+	],
+	"GUIDTemplate": "BAJ_A_{~PascalCaseIdentifier:Record._GUIDUniqueness~}_B_{~D:Record.id~}",
+	"Mappings":
+	{
+		"GUIDBook": "Book_{~D:Record.id~}",
+		"GUIDAuthor": "Author_{~PascalCaseIdentifier:Record._GUIDUniqueness~}"
+	}
+}

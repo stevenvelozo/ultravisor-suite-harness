@@ -1,0 +1,111 @@
+{
+	"Hash": "facto-projection-deploy",
+	"Name": "Facto Projection Deploy",
+	"Description": "Deploys a dataset schema to an external store and creates a projection store record in Facto. Uses beacon-dispatched FactoDeploy and FactoData actions.",
+	"Tags": ["facto", "deploy", "projection", "schema", "beacon"],
+	"Author": "Ultravisor",
+	"Version": "1.0.0",
+	"Graph": {
+		"Nodes": [
+			{
+				"Hash": "start",
+				"Type": "start",
+				"X": 50,
+				"Y": 200,
+				"Width": 140,
+				"Height": 80,
+				"Title": "Start",
+				"Ports": [
+					{ "Hash": "start-out", "Direction": "output", "Side": "right-bottom", "Label": "Out" }
+				],
+				"Data": {}
+			},
+			{
+				"Hash": "deploy-schema",
+				"Type": "beacon-factodeploy-deployschema",
+				"X": 260,
+				"Y": 180,
+				"Width": 240,
+				"Height": 120,
+				"Title": "Deploy Schema",
+				"Ports": [
+					{ "Hash": "deploy-schema-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "deploy-schema-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "deploy-schema-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "deploy-schema-Result", "Direction": "output", "Side": "right-top", "Label": "Result" }
+				],
+				"Data": {
+					"IDDataset": "{~D:Record.Operation.IDDataset~}",
+					"IDStoreConnection": "{~D:Record.Operation.IDStoreConnection~}",
+					"TargetTableName": "{~D:Record.Operation.TargetTableName~}"
+				}
+			},
+			{
+				"Hash": "create-projection-store",
+				"Type": "beacon-factodata-createprojectionstore",
+				"X": 570,
+				"Y": 180,
+				"Width": 260,
+				"Height": 120,
+				"Title": "Create Projection Store",
+				"Ports": [
+					{ "Hash": "create-projection-store-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "create-projection-store-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "create-projection-store-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "create-projection-store-Result", "Direction": "output", "Side": "right-top", "Label": "Result" }
+				],
+				"Data": {
+					"IDDataset": "{~D:Record.Operation.IDDataset~}",
+					"IDStoreConnection": "{~D:Record.Operation.IDStoreConnection~}",
+					"TableName": "{~D:Record.Operation.TargetTableName~}",
+					"DeployResult": "{~D:Record.TaskOutput.deploy-schema.Result~}"
+				}
+			},
+			{
+				"Hash": "error-handler",
+				"Type": "error-message",
+				"X": 420,
+				"Y": 420,
+				"Width": 220,
+				"Height": 80,
+				"Title": "Deploy Error",
+				"Ports": [
+					{ "Hash": "error-handler-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "error-handler-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" }
+				],
+				"Data": {
+					"MessageTemplate": "Facto projection deploy encountered an error"
+				}
+			},
+			{
+				"Hash": "end",
+				"Type": "end",
+				"X": 900,
+				"Y": 260,
+				"Width": 140,
+				"Height": 80,
+				"Title": "End",
+				"Ports": [
+					{ "Hash": "end-in", "Direction": "input", "Side": "left-bottom", "Label": "In" }
+				],
+				"Data": {}
+			}
+		],
+		"Connections": [
+			{ "Hash": "fpd-c1", "SourceNodeHash": "start", "SourcePortHash": "start-out", "TargetNodeHash": "deploy-schema", "TargetPortHash": "deploy-schema-Trigger", "Data": {} },
+			{ "Hash": "fpd-c2", "SourceNodeHash": "deploy-schema", "SourcePortHash": "deploy-schema-Complete", "TargetNodeHash": "create-projection-store", "TargetPortHash": "create-projection-store-Trigger", "Data": {} },
+			{ "Hash": "fpd-c3", "SourceNodeHash": "create-projection-store", "SourcePortHash": "create-projection-store-Complete", "TargetNodeHash": "end", "TargetPortHash": "end-in", "Data": {} },
+			{ "Hash": "fpd-e1", "SourceNodeHash": "deploy-schema", "SourcePortHash": "deploy-schema-Error", "TargetNodeHash": "error-handler", "TargetPortHash": "error-handler-Trigger", "Data": {} },
+			{ "Hash": "fpd-e2", "SourceNodeHash": "create-projection-store", "SourcePortHash": "create-projection-store-Error", "TargetNodeHash": "error-handler", "TargetPortHash": "error-handler-Trigger", "Data": {} },
+			{ "Hash": "fpd-e3", "SourceNodeHash": "error-handler", "SourcePortHash": "error-handler-Complete", "TargetNodeHash": "end", "TargetPortHash": "end-in", "Data": {} }
+		],
+		"ViewState": { "PanX": 0, "PanY": 0, "Zoom": 1, "SelectedNodeHash": null, "SelectedConnectionHash": null }
+	},
+	"SavedLayouts": [],
+	"InitialGlobalState": {},
+	"InitialOperationState": {
+		"IDDataset": 0,
+		"IDStoreConnection": 0,
+		"TargetTableName": ""
+	}
+}

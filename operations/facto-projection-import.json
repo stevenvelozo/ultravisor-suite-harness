@@ -1,0 +1,175 @@
+{
+	"Hash": "facto-projection-import",
+	"Name": "Facto Projection Import",
+	"Description": "Reads records from Facto, applies a projection mapping transform, and POSTs the resulting comprehension to a target endpoint. Demonstrates beacon-dispatched FactoData and FactoTransform actions combined with a standard send-json task.",
+	"Tags": ["facto", "projection", "transform", "beacon"],
+	"Author": "Ultravisor",
+	"Version": "1.0.0",
+	"Graph": {
+		"Nodes": [
+			{
+				"Hash": "start",
+				"Type": "start",
+				"X": 50,
+				"Y": 200,
+				"Width": 140,
+				"Height": 80,
+				"Title": "Start",
+				"Ports": [
+					{ "Hash": "start-out", "Direction": "output", "Side": "right-bottom", "Label": "Out" }
+				],
+				"Data": {}
+			},
+			{
+				"Hash": "init-state",
+				"Type": "set-value",
+				"X": 250,
+				"Y": 180,
+				"Width": 200,
+				"Height": 80,
+				"Title": "Set IDProjectionMapping",
+				"Ports": [
+					{ "Hash": "init-state-Execute", "Direction": "input", "Side": "left-bottom", "Label": "Execute" },
+					{ "Hash": "init-state-Value", "Direction": "input", "Side": "left-top", "Label": "Value" },
+					{ "Hash": "init-state-ToAddress", "Direction": "input", "Side": "left-top", "Label": "ToAddress" },
+					{ "Hash": "init-state-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "init-state-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "init-state-WrittenValue", "Direction": "output", "Side": "right-top", "Label": "WrittenValue" }
+				],
+				"Data": {
+					"Value": "0",
+					"ToAddress": "Operation.IDProjectionMapping"
+				}
+			},
+			{
+				"Hash": "init-state-sv-2",
+				"Type": "set-value",
+				"X": 250,
+				"Y": 210,
+				"Width": 200,
+				"Height": 80,
+				"Title": "Set TargetEndpoint",
+				"Ports": [
+					{ "Hash": "init-state-sv-2-Execute", "Direction": "input", "Side": "left-bottom", "Label": "Execute" },
+					{ "Hash": "init-state-sv-2-Value", "Direction": "input", "Side": "left-top", "Label": "Value" },
+					{ "Hash": "init-state-sv-2-ToAddress", "Direction": "input", "Side": "left-top", "Label": "ToAddress" },
+					{ "Hash": "init-state-sv-2-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "init-state-sv-2-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "init-state-sv-2-WrittenValue", "Direction": "output", "Side": "right-top", "Label": "WrittenValue" }
+				],
+				"Data": {
+					"Value": "http://localhost:8421/1.0/HarnessTargets",
+					"ToAddress": "Operation.TargetEndpoint"
+				}
+			},
+			{
+				"Hash": "read-records",
+				"Type": "beacon-factodata-readrecords",
+				"X": 520,
+				"Y": 180,
+				"Width": 220,
+				"Height": 120,
+				"Title": "Read Source Records",
+				"Ports": [
+					{ "Hash": "read-records-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "read-records-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "read-records-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "read-records-Result", "Direction": "output", "Side": "right-top", "Label": "Result" }
+				],
+				"Data": {
+					"IDProjectionMapping": "{~D:Record.Operation.IDProjectionMapping~}",
+					"Destination": "Operation.SourceRecords"
+				}
+			},
+			{
+				"Hash": "apply-mapping",
+				"Type": "beacon-factotransform-applymapping",
+				"X": 810,
+				"Y": 180,
+				"Width": 240,
+				"Height": 120,
+				"Title": "Apply Mapping Transform",
+				"Ports": [
+					{ "Hash": "apply-mapping-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "apply-mapping-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "apply-mapping-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "apply-mapping-Result", "Direction": "output", "Side": "right-top", "Label": "Result" }
+				],
+				"Data": {
+					"IDProjectionMapping": "{~D:Record.Operation.IDProjectionMapping~}",
+					"RecordsAddress": "Operation.SourceRecords",
+					"Destination": "Operation.TransformedRecords"
+				}
+			},
+			{
+				"Hash": "send-to-target",
+				"Type": "send-json",
+				"X": 1120,
+				"Y": 180,
+				"Width": 220,
+				"Height": 120,
+				"Title": "POST to Target",
+				"Ports": [
+					{ "Hash": "send-to-target-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "send-to-target-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" },
+					{ "Hash": "send-to-target-Error", "Direction": "output", "Side": "bottom", "Label": "Error" },
+					{ "Hash": "send-to-target-Response", "Direction": "output", "Side": "right-top", "Label": "Response" }
+				],
+				"Data": {
+					"URL": "{~D:Record.Operation.TargetEndpoint~}",
+					"Method": "POST",
+					"Address": "Operation.TransformedRecords",
+					"Destination": "Operation.SendResult"
+				}
+			},
+			{
+				"Hash": "error-handler",
+				"Type": "error-message",
+				"X": 810,
+				"Y": 420,
+				"Width": 220,
+				"Height": 80,
+				"Title": "Projection Error",
+				"Ports": [
+					{ "Hash": "error-handler-Trigger", "Direction": "input", "Side": "left-bottom", "Label": "Trigger" },
+					{ "Hash": "error-handler-Complete", "Direction": "output", "Side": "right-bottom", "Label": "Complete" }
+				],
+				"Data": {
+					"MessageTemplate": "Facto projection import encountered an error"
+				}
+			},
+			{
+				"Hash": "end",
+				"Type": "end",
+				"X": 1410,
+				"Y": 260,
+				"Width": 140,
+				"Height": 80,
+				"Title": "End",
+				"Ports": [
+					{ "Hash": "end-in", "Direction": "input", "Side": "left-bottom", "Label": "In" }
+				],
+				"Data": {}
+			}
+		],
+		"Connections": [
+			{ "Hash": "fpi-c1", "SourceNodeHash": "start", "SourcePortHash": "start-out", "TargetNodeHash": "init-state", "TargetPortHash": "init-state-Execute", "Data": {} },
+			{ "Hash": "fpi-c1b", "SourceNodeHash": "init-state", "SourcePortHash": "init-state-Complete", "TargetNodeHash": "init-state-sv-2", "TargetPortHash": "init-state-sv-2-Execute", "Data": {} },
+			{ "Hash": "fpi-c2", "SourceNodeHash": "init-state-sv-2", "SourcePortHash": "init-state-sv-2-Complete", "TargetNodeHash": "read-records", "TargetPortHash": "read-records-Trigger", "Data": {} },
+			{ "Hash": "fpi-c3", "SourceNodeHash": "read-records", "SourcePortHash": "read-records-Complete", "TargetNodeHash": "apply-mapping", "TargetPortHash": "apply-mapping-Trigger", "Data": {} },
+			{ "Hash": "fpi-c4", "SourceNodeHash": "apply-mapping", "SourcePortHash": "apply-mapping-Complete", "TargetNodeHash": "send-to-target", "TargetPortHash": "send-to-target-Trigger", "Data": {} },
+			{ "Hash": "fpi-c5", "SourceNodeHash": "send-to-target", "SourcePortHash": "send-to-target-Complete", "TargetNodeHash": "end", "TargetPortHash": "end-in", "Data": {} },
+			{ "Hash": "fpi-e1", "SourceNodeHash": "read-records", "SourcePortHash": "read-records-Error", "TargetNodeHash": "error-handler", "TargetPortHash": "error-handler-Trigger", "Data": {} },
+			{ "Hash": "fpi-e2", "SourceNodeHash": "apply-mapping", "SourcePortHash": "apply-mapping-Error", "TargetNodeHash": "error-handler", "TargetPortHash": "error-handler-Trigger", "Data": {} },
+			{ "Hash": "fpi-e3", "SourceNodeHash": "send-to-target", "SourcePortHash": "send-to-target-Error", "TargetNodeHash": "error-handler", "TargetPortHash": "error-handler-Trigger", "Data": {} },
+			{ "Hash": "fpi-e4", "SourceNodeHash": "error-handler", "SourcePortHash": "error-handler-Complete", "TargetNodeHash": "end", "TargetPortHash": "end-in", "Data": {} }
+		],
+		"ViewState": { "PanX": 0, "PanY": 0, "Zoom": 1, "SelectedNodeHash": null, "SelectedConnectionHash": null }
+	},
+	"SavedLayouts": [],
+	"InitialGlobalState": {},
+	"InitialOperationState": {
+		"IDProjectionMapping": 0,
+		"TargetEndpoint": "http://localhost:8421/1.0/HarnessTargets"
+	}
+}
