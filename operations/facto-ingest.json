@@ -95,7 +95,8 @@
 				"Data": {
 					"Records": "{~D:Record.Operation.Records~}",
 					"IDDataset": "{~D:Record.TaskOutput.create-dataset.Created.IDDataset~}",
-					"IDSource": "{~D:Record.TaskOutput.create-source.Created.IDSource~}"
+					"IDSource": "{~D:Record.TaskOutput.create-source.Created.IDSource~}",
+					"DatasetName": "{~D:Record.Operation.DatasetName~}"
 				}
 			},
 			{

@@ -667,6 +667,7 @@ class ServiceServerManager extends libFableServiceProviderBase
 							let tmpRecords = tmpSettings.Records || [];
 							let tmpIDDataset = parseInt(tmpSettings.IDDataset, 10) || 0;
 							let tmpIDSource = parseInt(tmpSettings.IDSource, 10) || 0;
+							let tmpDatasetName = tmpSettings.DatasetName || '';
 							let tmpCreatedCount = 0;
 							let tmpIndex = 0;
 							// Unwind the call stack every BATCH_SIZE records to
@@ -678,6 +679,12 @@ class ServiceServerManager extends libFableServiceProviderBase
 							{
 								if (tmpIndex >= tmpRecords.length)
 								{
+									// Emit final partial batch
+									let tmpRemainder = tmpIndex % BATCH_SIZE;
+									if (tmpRemainder > 0 && tmpFactoFable.ThroughputMonitor)
+									{
+										tmpFactoFable.ThroughputMonitor.recordEvent('written', tmpRemainder, tmpDatasetName);
+									}
 									return fHandlerCallback(null, { Outputs: { Count: tmpCreatedCount } });
 								}
 								let tmpRecordData = tmpRecords[tmpIndex];
@@ -705,9 +712,14 @@ class ServiceServerManager extends libFableServiceProviderBase
 										{
 											tmpCreatedCount++;
 										}
-										// Unwind the stack periodically
+										// Unwind the stack periodically and emit throughput events
 										if (tmpIndex % BATCH_SIZE === 0)
 										{
+											// Emit throughput event for this batch
+											if (tmpFactoFable.ThroughputMonitor)
+											{
+												tmpFactoFable.ThroughputMonitor.recordEvent('written', BATCH_SIZE, tmpDatasetName);
+											}
 											return setImmediate(tmpCreateNext);
 										}
 										tmpCreateNext();

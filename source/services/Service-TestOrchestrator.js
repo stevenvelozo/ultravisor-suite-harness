@@ -163,10 +163,14 @@ class ServiceTestOrchestrator extends libFableServiceProviderBase
 		let tmpResults = [];
 		let tmpIndex   = 0;
 
+		// Start throughput tracking
+		this._startThroughputRun(`Suite: ${pDatasets.length} datasets`);
+
 		const processNext = () =>
 		{
 			if (tmpIndex >= pDatasets.length)
 			{
+				this._endThroughputRun();
 				return fCallback(null, tmpResults);
 			}
 
@@ -240,6 +244,9 @@ class ServiceTestOrchestrator extends libFableServiceProviderBase
 						return setImmediate(processNext);
 					}
 
+					// Emit "extracted" throughput event
+					this._emitThroughput('extracted', pRecords.length, tmpDatasetName);
+
 					// ── Multi-entity mapping path ────────────────────────────
 					if (tmpConfig && tmpConfig.mappings)
 					{
@@ -251,6 +258,9 @@ class ServiceTestOrchestrator extends libFableServiceProviderBase
 
 					// ── Standard identity ingest ─────────────────────────────
 					let tmpTransformed = this._applyTransform(pRecords, tmpDatasetName);
+
+					// Emit "transformed" throughput event (identity transform)
+					this._emitThroughput('transformed', tmpTransformed.length, tmpDatasetName);
 
 					fProgress(`[${tmpIndex}/${pDatasets.length}] ${tmpDatasetName} — triggering Ultravisor ingest (${tmpTransformed.length} records)...`);
 
@@ -395,6 +405,9 @@ class ServiceTestOrchestrator extends libFableServiceProviderBase
 			// Extract the comprehension for this entity
 			let tmpComprehension = tmpMappingOutcome.Comprehension[tmpEntityName] || {};
 			let tmpFlatRecords = Object.values(tmpComprehension);
+
+			// Emit "transformed" throughput event
+			this._emitThroughput('transformed', tmpFlatRecords.length, tmpDatasetFullName);
 
 			if (tmpFlatRecords.length === 0)
 			{
@@ -841,6 +854,58 @@ class ServiceTestOrchestrator extends libFableServiceProviderBase
 				RecordsCreated:    pCreated,
 			},
 			() => { return fCallback(null); });
+	}
+
+	// ─────────────────────────────────────────────
+	//  Throughput instrumentation
+	// ─────────────────────────────────────────────
+
+	/**
+	 * Emit a throughput event to Facto's ThroughputMonitor.
+	 * Uses the in-process service if available, falls back to HTTP POST.
+	 */
+	_emitThroughput(pStage, pCount, pDatasetName)
+	{
+		// Fast path: use in-process ThroughputMonitor directly
+		let tmpServerManager = this.fable.HarnessServerManager;
+		if (tmpServerManager && tmpServerManager._factoFable && tmpServerManager._factoFable.ThroughputMonitor)
+		{
+			tmpServerManager._factoFable.ThroughputMonitor.recordEvent(pStage, pCount, pDatasetName);
+			return;
+		}
+
+		// Fallback: POST to the REST endpoint (fire-and-forget)
+		this._httpPost(`${FACTO_BASE}facto/throughput/event`,
+			{ Stage: pStage, Count: pCount, Dataset: pDatasetName },
+			() => {});
+	}
+
+	/**
+	 * Signal the start of a pipeline run to the ThroughputMonitor.
+	 */
+	_startThroughputRun(pLabel)
+	{
+		let tmpServerManager = this.fable.HarnessServerManager;
+		if (tmpServerManager && tmpServerManager._factoFable && tmpServerManager._factoFable.ThroughputMonitor)
+		{
+			tmpServerManager._factoFable.ThroughputMonitor.startRun(pLabel);
+			return;
+		}
+		this._httpPost(`${FACTO_BASE}facto/throughput/run/start`, { Label: pLabel }, () => {});
+	}
+
+	/**
+	 * Signal the end of a pipeline run.
+	 */
+	_endThroughputRun()
+	{
+		let tmpServerManager = this.fable.HarnessServerManager;
+		if (tmpServerManager && tmpServerManager._factoFable && tmpServerManager._factoFable.ThroughputMonitor)
+		{
+			tmpServerManager._factoFable.ThroughputMonitor.endRun();
+			return;
+		}
+		this._httpPost(`${FACTO_BASE}facto/throughput/run/end`, {}, () => {});
 	}
 
 	// ─────────────────────────────────────────────
