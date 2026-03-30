@@ -94,8 +94,9 @@ class HarnessApplication extends libPictApplication
 			ConsoleLog: '',
 			Servers:
 			{
-				Facto:      { port: 8420, status: 'starting' },
-				Ultravisor: { port: 8422, status: 'starting' },
+				Facto:       { port: 8420, status: 'starting' },
+				Integration: { port: 8421, status: 'starting' },
+				Ultravisor:  { port: 8422, status: 'starting' },
 			},
 		};
 
@@ -136,16 +137,16 @@ class HarnessApplication extends libPictApplication
 			{
 				if (pServerError)
 				{
-					this.pict.AppData.Harness.Servers.Facto.status      = 'error';
-	
-					this.pict.AppData.Harness.Servers.Ultravisor.status = 'error';
+					this.pict.AppData.Harness.Servers.Facto.status       = 'error';
+					this.pict.AppData.Harness.Servers.Integration.status  = 'error';
+					this.pict.AppData.Harness.Servers.Ultravisor.status   = 'error';
 					this._setStatus(`Server start failed: ${pServerError.message}  |  q=Quit`);
 				}
 				else
 				{
-					this.pict.AppData.Harness.Servers.Facto.status      = 'running';
-	
-					this.pict.AppData.Harness.Servers.Ultravisor.status = 'running';
+					this.pict.AppData.Harness.Servers.Facto.status       = 'running';
+					this.pict.AppData.Harness.Servers.Integration.status  = 'running';
+					this.pict.AppData.Harness.Servers.Ultravisor.status   = 'running';
 					this._setStatus('Ready  |  1=Clean & Execute  2=Run  3=Results  4=Datasets  5=Log  q=Quit');
 				}
 
@@ -353,9 +354,9 @@ class HarnessApplication extends libPictApplication
 		this.navigateTo('SuiteRunner');
 
 		// Stop servers → wipe data dir → reinitialize DB → restart servers → run suite
-		this.pict.AppData.Harness.Servers.Facto.status      = 'stopping';
-
-		this.pict.AppData.Harness.Servers.Ultravisor.status = 'stopping';
+		this.pict.AppData.Harness.Servers.Facto.status       = 'stopping';
+		this.pict.AppData.Harness.Servers.Integration.status  = 'stopping';
+		this.pict.AppData.Harness.Servers.Ultravisor.status   = 'stopping';
 
 		this.pict.HarnessServerManager.stopAll(
 			() =>
@@ -376,9 +377,9 @@ class HarnessApplication extends libPictApplication
 						this._appendLog('[CLEAN] Data directory wiped.\n[INIT] Starting fresh servers...\n');
 						this._setStatus('Starting fresh servers...');
 
-						this.pict.AppData.Harness.Servers.Facto.status      = 'starting';
-
-						this.pict.AppData.Harness.Servers.Ultravisor.status = 'starting';
+						this.pict.AppData.Harness.Servers.Facto.status       = 'starting';
+						this.pict.AppData.Harness.Servers.Integration.status  = 'starting';
+						this.pict.AppData.Harness.Servers.Ultravisor.status   = 'starting';
 
 						this.pict.HarnessServerManager.startAll(DATA_DIR_PATH,
 							(pServerError) =>
@@ -393,9 +394,9 @@ class HarnessApplication extends libPictApplication
 									return;
 								}
 
-								this.pict.AppData.Harness.Servers.Facto.status      = 'running';
-				
-								this.pict.AppData.Harness.Servers.Ultravisor.status = 'running';
+								this.pict.AppData.Harness.Servers.Facto.status       = 'running';
+								this.pict.AppData.Harness.Servers.Integration.status = 'running';
+								this.pict.AppData.Harness.Servers.Ultravisor.status  = 'running';
 								this._appendLog('[INIT] Servers running.\n[INIT] Initializing harness DB...\n');
 								this._setStatus('Initializing harness database...');
 

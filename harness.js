@@ -79,7 +79,7 @@ process.stderr.write = function (pChunk, pEncoding, pCallback)
 // shut down cleanly (e.g. Ctrl-C without a SIGINT handler).
 
 const { execSync } = require('child_process');
-const HARNESS_PORTS = [8420, 8422];
+const HARNESS_PORTS = [8420, 8421, 8422];
 
 function _killStalePortProcesses()
 {

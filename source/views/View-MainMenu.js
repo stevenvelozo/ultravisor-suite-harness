@@ -27,6 +27,7 @@ const _ViewConfiguration =
 				'{cyan-fg}── Servers ───────────────────────────────────────{/cyan-fg}',
 				'',
 				'  Facto Server       :8420   {~D:Record.Servers.Facto.statusLabel~}    http://localhost:8420/',
+				'  Integration        :8421   {~D:Record.Servers.Integration.statusLabel~}    http://localhost:8421/mapping/  http://localhost:8421/docs/',
 				'  Ultravisor         :8422   {~D:Record.Servers.Ultravisor.statusLabel~}    http://localhost:8422/',
 				'',
 				'  Library: {~D:Record.FactoLibraryPath~}',
@@ -88,8 +89,9 @@ class ViewMainMenu extends libPictView
 
 		if (tmpServers)
 		{
-			tmpServers.Facto.statusLabel      = _statusLabel(tmpServers.Facto.status);
-			tmpServers.Ultravisor.statusLabel = _statusLabel(tmpServers.Ultravisor.status);
+			tmpServers.Facto.statusLabel       = _statusLabel(tmpServers.Facto.status);
+			tmpServers.Integration.statusLabel  = _statusLabel(tmpServers.Integration.status);
+			tmpServers.Ultravisor.statusLabel   = _statusLabel(tmpServers.Ultravisor.status);
 		}
 	}
 }

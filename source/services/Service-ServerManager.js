@@ -1,15 +1,17 @@
 /**
  * Service-ServerManager
  *
- * Manages two embedded HTTP servers used by the harness integration tests:
+ * Manages three embedded HTTP servers used by the harness integration tests:
  *
- *   Facto Server       — port 8420  — RetoldFacto data warehouse (Sources, Datasets, Records, Projections)
- *   Ultravisor Server  — port 8422  — Workflow execution engine + beacon coordinator
+ *   Facto Server              — port 8420  — RetoldFacto data warehouse (Sources, Datasets, Records, Projections)
+ *   Meadow-Integration Server — port 8421  — Parsing and transformation service
+ *   Ultravisor Server         — port 8422  — Workflow execution engine + beacon coordinator
  *
  * Facto uses RetoldFacto with full web UI and meadow endpoints.
+ * Meadow-Integration provides FileParser and TabularTransform as a remote service.
  * Ultravisor uses the full UltravisorAPIServer service.
- * After both servers start, Facto registers as a beacon with Ultravisor so that
- * workflow operations can dispatch data-access tasks to the Facto server.
+ * After all servers start, Facto and Meadow-Integration register as beacons
+ * with Ultravisor so that workflow operations can dispatch work to them.
  *
  * Usage:
  *   serverManager.startAll(pDataDir, (err) => { ... });
@@ -23,6 +25,7 @@ const libFs = require('fs');
 const libPict = require('pict');
 const libOrator = require('orator');
 const libOratorRestify = require('orator-serviceserver-restify');
+const libOratorStaticServer = require('orator-static-server');
 const libMeadow = require('meadow');
 const libMeadowEndpoints = require('meadow-endpoints');
 const libMeadowConnectionSQLite = require('meadow-connection-sqlite');
@@ -31,10 +34,14 @@ const libUltravisor = require('ultravisor');
 const libBeaconService = require('ultravisor-beacon');
 const libUltravisorAPIServer = require('ultravisor/source/web_server/Ultravisor-API-Server.cjs');
 const libRetoldFacto = require('retold-facto');
+const libMeadowIntegration = require('meadow-integration');
+const libTabularTransform = require('meadow-integration/source/services/tabular/Service-TabularTransform.js');
+const libMeadowIntegrationFileParser = require('meadow-integration/source/services/parser/Service-FileParser.js');
 
 // ── Port constants ──────────────────────────────────────────────────────────────
 
 const FACTO_PORT = 8420;
+const INTEGRATION_PORT = 8421;
 const ULTRAVISOR_PORT = 8422;
 
 // ── Port availability check ──────────────────────────────────────────────────────
@@ -74,18 +81,23 @@ class ServiceServerManager extends libFableServiceProviderBase
 
 		this.serviceType = 'HarnessServerManager';
 
-		this._factoFable        = null;
-		this._factoFactoService = null;
-		this._ultravisorFable  = null;
-		this._ultravisorOrator = null;
+		this._factoFable           = null;
+		this._factoFactoService    = null;
+		this._integrationFable     = null;
+		this._integrationOrator    = null;
+		this._ultravisorFable      = null;
+		this._ultravisorOrator     = null;
 
-		this.factoPort      = FACTO_PORT;
-		this.ultravisorPort = ULTRAVISOR_PORT;
+		this.factoPort       = FACTO_PORT;
+		this.integrationPort = INTEGRATION_PORT;
+		this.ultravisorPort  = ULTRAVISOR_PORT;
 
-		this.factoRunning      = false;
-		this.ultravisorRunning = false;
+		this.factoRunning       = false;
+		this.integrationRunning = false;
+		this.ultravisorRunning  = false;
 
-		this._factoBeacon = null;
+		this._factoBeacon       = null;
+		this._integrationBeacon = null;
 	}
 
 	// ─────────────────────────────────────────────
@@ -246,6 +258,129 @@ class ServiceServerManager extends libFableServiceProviderBase
 		this.factoRunning       = false;
 		this._factoFable        = null;
 		this._factoFactoService = null;
+		return fCallback(null);
+	}
+
+	// ─────────────────────────────────────────────
+	//  Meadow-Integration server
+	// ─────────────────────────────────────────────
+
+	_startIntegrationServer(pDataDir, fCallback)
+	{
+		let tmpIntegrationFable = new libPict(
+			{
+				Product: 'HarnessIntegration',
+				LogNoisiness: 0,
+				LogStreams: [],
+				APIServerPort: INTEGRATION_PORT,
+			});
+
+		this._integrationFable = tmpIntegrationFable;
+
+		// Register services needed for parsing and transformation
+		tmpIntegrationFable.serviceManager.addServiceType('MeadowIntegrationFileParser', libMeadowIntegrationFileParser);
+		tmpIntegrationFable.serviceManager.instantiateServiceProvider('MeadowIntegrationFileParser');
+		tmpIntegrationFable.serviceManager.addServiceType('TabularTransform', libTabularTransform);
+		tmpIntegrationFable.serviceManager.instantiateServiceProvider('TabularTransform');
+
+		// Set up Orator for HTTP
+		tmpIntegrationFable.serviceManager.addServiceType('OratorServiceServer', libOratorRestify);
+		tmpIntegrationFable.serviceManager.addServiceType('Orator', libOrator);
+		tmpIntegrationFable.serviceManager.addServiceType('OratorStaticServer', libOratorStaticServer);
+		tmpIntegrationFable.serviceManager.instantiateServiceProvider('OratorServiceServer', {});
+
+		let tmpOrator = tmpIntegrationFable.serviceManager.instantiateServiceProvider('Orator', {});
+		this._integrationOrator = tmpOrator;
+
+		_checkPortAvailable(INTEGRATION_PORT,
+			(pPortError) =>
+			{
+				if (pPortError)
+				{
+					return fCallback(new Error(`Integration: ${pPortError.message}`));
+				}
+
+				tmpOrator.initialize(
+					(pInitError) =>
+					{
+						if (pInitError)
+						{
+							return fCallback(new Error(`Integration init: ${pInitError.message}`));
+						}
+
+						tmpIntegrationFable.OratorServiceServer.server.use(
+							tmpIntegrationFable.OratorServiceServer.bodyParser());
+
+						// Register a simple status endpoint
+						tmpIntegrationFable.OratorServiceServer.get('/status',
+							(pRequest, pResponse, fNext) =>
+							{
+								pResponse.send({ Service: 'meadow-integration', Status: 'Running', Port: INTEGRATION_PORT });
+								return fNext();
+							});
+
+						// Serve the mapping demo and docs web apps
+						let tmpMIRoot = libPath.resolve(__dirname, '..', '..', '..', '..', 'meadow', 'meadow-integration');
+						let tmpStaticServer = tmpIntegrationFable.serviceManager.instantiateServiceProvider('OratorStaticServer');
+						tmpStaticServer.addStaticRoute(
+							libPath.join(tmpMIRoot, 'example-applications', 'mapping-demo', 'web'),
+							'index.html', '/mapping/*', '/mapping/');
+						tmpStaticServer.addStaticRoute(
+							libPath.join(tmpMIRoot, 'docs'),
+							'index.html', '/docs/*', '/docs/');
+
+						tmpOrator.startWebServer(
+							(pStartError) =>
+							{
+								if (pStartError)
+								{
+									return fCallback(new Error(`Integration start: ${pStartError.message}`));
+								}
+
+								this.integrationRunning = true;
+								this.fable.log.info(`[ServerManager] Meadow-Integration server listening on port ${INTEGRATION_PORT}`);
+								return fCallback(null);
+							});
+					});
+			});
+	}
+
+	_stopIntegrationServer(fCallback)
+	{
+		if (!this.integrationRunning || !this._integrationFable)
+		{
+			this.integrationRunning  = false;
+			this._integrationFable   = null;
+			this._integrationOrator  = null;
+			return fCallback(null);
+		}
+
+		try
+		{
+			let tmpServer = this._integrationFable.OratorServiceServer
+				&& this._integrationFable.OratorServiceServer.server;
+
+			if (tmpServer && typeof tmpServer.close === 'function')
+			{
+				tmpServer.close(
+					() =>
+					{
+						this.integrationRunning  = false;
+						this._integrationFable   = null;
+						this._integrationOrator  = null;
+						return fCallback(null);
+					});
+				return;
+			}
+		}
+		catch (pCloseError)
+		{
+			// fall through
+		}
+
+		this.integrationRunning  = false;
+		this._integrationFable   = null;
+		this._integrationOrator  = null;
 		return fCallback(null);
 	}
 
@@ -689,6 +824,21 @@ class ServiceServerManager extends libFableServiceProviderBase
 								}
 								let tmpRecordData = tmpRecords[tmpIndex];
 								tmpIndex++;
+
+								// If the record doesn't have a Content field, it's a raw
+								// parsed object from the meadow-integration beacon.
+								// Wrap it in a Facto Record envelope.
+								if (tmpRecordData.Content === undefined)
+								{
+									tmpRecordData =
+									{
+										Type:       'HarnessRecord',
+										IngestDate: new Date().toISOString(),
+										Version:    1,
+										Content:    JSON.stringify(tmpRecordData),
+									};
+								}
+
 								// Inject IDDataset/IDSource from upstream tasks
 								if (tmpIDDataset && !tmpRecordData.IDDataset)
 								{
@@ -870,6 +1020,181 @@ class ServiceServerManager extends libFableServiceProviderBase
 	}
 
 	// ─────────────────────────────────────────────
+	//  Meadow-Integration beacon
+	// ─────────────────────────────────────────────
+
+	_registerIntegrationBeacon(fCallback)
+	{
+		let tmpIntegrationFable = this._integrationFable;
+
+		if (!tmpIntegrationFable)
+		{
+			return fCallback(new Error('Integration fable not available'));
+		}
+
+		tmpIntegrationFable.serviceManager.addServiceTypeIfNotExists('UltravisorBeacon', libBeaconService);
+		let tmpBeacon = tmpIntegrationFable.instantiateServiceProviderWithoutRegistration(
+			'UltravisorBeacon',
+			{
+				ServerURL:        `http://localhost:${ULTRAVISOR_PORT}`,
+				Name:             'meadow-integration',
+				MaxConcurrent:    5,
+				PollIntervalMs:   2000,
+				HeartbeatIntervalMs: 30000,
+			});
+
+		this._integrationBeacon = tmpBeacon;
+
+		let tmpLog = this.fable.log;
+
+		tmpBeacon.registerCapability(
+			{
+				Capability: 'MeadowIntegration',
+				Name:       'MeadowIntegrationProvider',
+				actions:
+				{
+					'ParseContent':
+					{
+						Description: 'Parse raw content (CSV, JSON, XML, etc.) into records',
+						SettingsSchema:
+						[
+							{ Name: 'Content', DataType: 'String', Required: true },
+							{ Name: 'Format', DataType: 'String' },
+						],
+						Handler: function (pWorkItem, pContext, fHandlerCallback)
+						{
+							let tmpSettings = pWorkItem.Settings || {};
+							let tmpContent = tmpSettings.Content || '';
+							let tmpOptions = {};
+							if (tmpSettings.Format)
+							{
+								tmpOptions.format = tmpSettings.Format;
+							}
+
+							tmpIntegrationFable.MeadowIntegrationFileParser.parseContent(
+								tmpContent, tmpOptions,
+								(pError, pRecords) =>
+								{
+									if (pError)
+									{
+										return fHandlerCallback(pError);
+									}
+									return fHandlerCallback(null, { Outputs: { Records: pRecords || [], Count: (pRecords || []).length } });
+								});
+						}
+					},
+					'TransformRecords':
+					{
+						Description: 'Apply a mapping configuration to records via TabularTransform',
+						SettingsSchema:
+						[
+							{ Name: 'Records', DataType: 'Array', Required: true },
+							{ Name: 'MappingConfiguration', DataType: 'Object', Required: true },
+							{ Name: 'EntityName', DataType: 'String', Required: true },
+						],
+						Handler: function (pWorkItem, pContext, fHandlerCallback)
+						{
+							let tmpSettings = pWorkItem.Settings || {};
+							let tmpRecords = tmpSettings.Records || [];
+							let tmpMappingConfig = tmpSettings.MappingConfiguration || {};
+							let tmpEntityName = tmpSettings.EntityName || tmpMappingConfig.Entity || 'Unknown';
+
+							let tmpMappingOutcome =
+							{
+								Configuration: {},
+								ImplicitConfiguration: { Entity: tmpEntityName, Mappings: {} },
+								ExplicitConfiguration: tmpMappingConfig,
+								Comprehension: {},
+							};
+
+							try
+							{
+								tmpIntegrationFable.TabularTransform.initializeMappingOutcomeObject(tmpMappingOutcome);
+
+								for (let i = 0; i < tmpRecords.length; i++)
+								{
+									tmpIntegrationFable.TabularTransform.transformRecord(tmpRecords[i], tmpMappingOutcome);
+								}
+
+								let tmpComprehension = tmpMappingOutcome.Comprehension[tmpEntityName] || {};
+								let tmpFlatRecords = Object.values(tmpComprehension);
+
+								return fHandlerCallback(null,
+								{
+									Outputs:
+									{
+										Records:      tmpFlatRecords,
+										Count:        tmpFlatRecords.length,
+										ParsedCount:  tmpMappingOutcome.ParsedRowCount || tmpRecords.length,
+										BadRecords:   (tmpMappingOutcome.BadRecords || []).length,
+										Entity:       tmpEntityName,
+									}
+								});
+							}
+							catch (pTransformError)
+							{
+								return fHandlerCallback(pTransformError);
+							}
+						}
+					},
+					'ParseFile':
+					{
+						Description: 'Parse a file from a path into records',
+						SettingsSchema:
+						[
+							{ Name: 'FilePath', DataType: 'String', Required: true },
+							{ Name: 'Format', DataType: 'String' },
+						],
+						Handler: function (pWorkItem, pContext, fHandlerCallback)
+						{
+							let tmpSettings = pWorkItem.Settings || {};
+							let tmpFilePath = tmpSettings.FilePath || '';
+							let tmpOptions = {};
+							if (tmpSettings.Format)
+							{
+								tmpOptions.format = tmpSettings.Format;
+							}
+
+							let tmpAllRecords = [];
+							tmpIntegrationFable.MeadowIntegrationFileParser.parseFile(
+								tmpFilePath, tmpOptions,
+								(pChunkError, pChunkRecords) =>
+								{
+									if (!pChunkError && Array.isArray(pChunkRecords))
+									{
+										for (let i = 0; i < pChunkRecords.length; i++)
+										{
+											tmpAllRecords.push(pChunkRecords[i]);
+										}
+									}
+								},
+								(pError, pTotalCount) =>
+								{
+									if (pError)
+									{
+										return fHandlerCallback(pError);
+									}
+									return fHandlerCallback(null, { Outputs: { Records: tmpAllRecords, Count: tmpAllRecords.length } });
+								});
+						}
+					},
+				}
+			});
+
+		tmpBeacon.enable(
+			(pError, pBeaconInfo) =>
+			{
+				if (pError)
+				{
+					tmpLog.error(`[ServerManager] Integration beacon registration failed: ${pError.message}`);
+					return fCallback(null);
+				}
+				tmpLog.info(`[ServerManager] Meadow-Integration registered as beacon: ${pBeaconInfo.BeaconID}`);
+				return fCallback(null);
+			});
+	}
+
+	// ─────────────────────────────────────────────
 	//  Public API
 	// ─────────────────────────────────────────────
 
@@ -882,22 +1207,34 @@ class ServiceServerManager extends libFableServiceProviderBase
 				{
 					return fCallback(pFactoError);
 				}
-				this._startUltravisorServer(pDataDir,
-					(pUltravisorError) =>
+				this._startIntegrationServer(pDataDir,
+					(pIntegrationError) =>
 					{
-						if (pUltravisorError)
+						if (pIntegrationError)
 						{
-							return fCallback(pUltravisorError);
+							return fCallback(pIntegrationError);
 						}
-						// After both servers are up, register facto as a beacon with Ultravisor
-						this._registerFactoBeacon(fCallback);
+						this._startUltravisorServer(pDataDir,
+							(pUltravisorError) =>
+							{
+								if (pUltravisorError)
+								{
+									return fCallback(pUltravisorError);
+								}
+								// After all servers are up, register both beacons with Ultravisor
+								this._registerFactoBeacon(
+									() =>
+									{
+										this._registerIntegrationBeacon(fCallback);
+									});
+							});
 					});
 			});
 	}
 
 	stopAll(fCallback)
 	{
-		// Disable the beacon first so it stops its WebSocket/polling
+		// Disable beacons first so they stop WebSocket/polling
 		if (this._factoBeacon && typeof this._factoBeacon.disable === 'function')
 		{
 			try { this._factoBeacon.disable(() => {}); }
@@ -905,10 +1242,21 @@ class ServiceServerManager extends libFableServiceProviderBase
 		}
 		this._factoBeacon = null;
 
+		if (this._integrationBeacon && typeof this._integrationBeacon.disable === 'function')
+		{
+			try { this._integrationBeacon.disable(() => {}); }
+			catch (pBeaconErr) { /* non-fatal */ }
+		}
+		this._integrationBeacon = null;
+
 		this._stopFactoServer(
 			() =>
 			{
-				this._stopUltravisorServer(fCallback);
+				this._stopIntegrationServer(
+					() =>
+					{
+						this._stopUltravisorServer(fCallback);
+					});
 			});
 	}
 

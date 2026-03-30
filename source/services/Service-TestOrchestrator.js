@@ -220,92 +220,81 @@ class ServiceTestOrchestrator extends libFableServiceProviderBase
 				return setImmediate(processNext);
 			}
 
-			fProgress(`[${tmpIndex}/${pDatasets.length}] ${tmpDatasetName} — parsing ${libPath.basename(tmpFilePath)}...`);
+			// ── Multi-entity mapping path ────────────────────────────
+			// Bookstore-style datasets with explicit mappings still need
+			// in-process parsing because TabularTransform runs locally.
+			if (tmpConfig && tmpConfig.mappings)
+			{
+				fProgress(`[${tmpIndex}/${pDatasets.length}] ${tmpDatasetName} — parsing ${libPath.basename(tmpFilePath)}...`);
 
-			// ── 2. Parse ─────────────────────────────────────────────────────────
-			this._parseFile(tmpFilePath, tmpConfig || {},
-				(pParseError, pRecords) =>
+				this._parseFile(tmpFilePath, tmpConfig || {},
+					(pParseError, pRecords) =>
+					{
+						if (pParseError)
+						{
+							tmpResult.status = 'fail';
+							tmpResult.error  = `Parse error: ${pParseError.message}`;
+							fProgress(`[FAIL] ${tmpDatasetName} — ${tmpResult.error}`);
+							return setImmediate(processNext);
+						}
+
+						tmpResult.parsed = pRecords.length;
+						this._emitThroughput('extracted', pRecords.length, tmpDatasetName);
+
+						this._runMappedIngest(tmpDatasetName, pRecords, tmpConfig, tmpIndex, pDatasets.length,
+							fProgress, tmpResult, tmpResults,
+							() => { return setImmediate(processNext); });
+					});
+				return;
+			}
+
+			// ── Standard identity ingest via full pipeline ──────────────
+			// Dispatch EVERYTHING to beacons: meadow-integration parses the
+			// file, Facto stores the records — all orchestrated by Ultravisor.
+			fProgress(`[${tmpIndex}/${pDatasets.length}] ${tmpDatasetName} — triggering full pipeline ingest (${libPath.basename(tmpFilePath)})...`);
+
+			this._triggerFullPipelineIngest(tmpDatasetName, tmpFilePath, tmpConfig,
+				(pIngestError, pLoadedCount, pIDDataset) =>
 				{
-					if (pParseError)
+					if (pIngestError)
 					{
 						tmpResult.status = 'fail';
-						tmpResult.error  = `Parse error: ${pParseError.message}`;
+						tmpResult.error  = `Full pipeline: ${pIngestError.message}`;
 						fProgress(`[FAIL] ${tmpDatasetName} — ${tmpResult.error}`);
 						return setImmediate(processNext);
 					}
 
-					tmpResult.parsed = pRecords.length;
+					tmpResult.parsed = pLoadedCount;
+					tmpResult.loaded = pLoadedCount;
 
-					if (tmpResult.parsed === 0)
-					{
-						tmpResult.status = 'fail';
-						tmpResult.error  = 'No records parsed from file';
-						fProgress(`[FAIL] ${tmpDatasetName} — 0 records parsed`);
-						return setImmediate(processNext);
-					}
+					fProgress(`[${tmpIndex}/${pDatasets.length}] ${tmpDatasetName} — verifying records in Facto...`);
 
-					// Emit "extracted" throughput event
-					this._emitThroughput('extracted', pRecords.length, tmpDatasetName);
-
-					// ── Multi-entity mapping path ────────────────────────────
-					if (tmpConfig && tmpConfig.mappings)
-					{
-						this._runMappedIngest(tmpDatasetName, pRecords, tmpConfig, tmpIndex, pDatasets.length,
-							fProgress, tmpResult, tmpResults,
-							() => { return setImmediate(processNext); });
-						return;
-					}
-
-					// ── Standard identity ingest ─────────────────────────────
-					let tmpTransformed = this._applyTransform(pRecords, tmpDatasetName);
-
-					// Emit "transformed" throughput event (identity transform)
-					this._emitThroughput('transformed', tmpTransformed.length, tmpDatasetName);
-
-					fProgress(`[${tmpIndex}/${pDatasets.length}] ${tmpDatasetName} — triggering Ultravisor ingest (${tmpTransformed.length} records)...`);
-
-					this._triggerUltravisorIngest(tmpDatasetName, tmpTransformed,
-						(pIngestError, pLoadedCount, pIDDataset) =>
+					this._verifyFactoCount(pIDDataset,
+						(pVerifyError, pCount) =>
 						{
-							if (pIngestError)
+							if (pVerifyError)
 							{
 								tmpResult.status = 'fail';
-								tmpResult.error  = `Ultravisor ingest: ${pIngestError.message}`;
+								tmpResult.error  = `Verify: ${pVerifyError.message}`;
 								fProgress(`[FAIL] ${tmpDatasetName} — ${tmpResult.error}`);
-								return setImmediate(processNext);
+							}
+							else
+							{
+								tmpResult.verified = pCount;
+								tmpResult.status   = (tmpResult.verified >= tmpResult.loaded) ? 'pass' : 'fail';
+
+								if (tmpResult.status === 'pass')
+								{
+									fProgress(`[PASS] ${tmpDatasetName} — verified ${tmpResult.verified} records`);
+								}
+								else
+								{
+									tmpResult.error = `Count mismatch: loaded ${tmpResult.loaded}, verified ${tmpResult.verified}`;
+									fProgress(`[FAIL] ${tmpDatasetName} — ${tmpResult.error}`);
+								}
 							}
 
-							tmpResult.loaded = pLoadedCount;
-
-							fProgress(`[${tmpIndex}/${pDatasets.length}] ${tmpDatasetName} — verifying records in Facto...`);
-
-							this._verifyFactoCount(pIDDataset,
-								(pVerifyError, pCount) =>
-								{
-									if (pVerifyError)
-									{
-										tmpResult.status = 'fail';
-										tmpResult.error  = `Verify: ${pVerifyError.message}`;
-										fProgress(`[FAIL] ${tmpDatasetName} — ${tmpResult.error}`);
-									}
-									else
-									{
-										tmpResult.verified = pCount;
-										tmpResult.status   = (tmpResult.verified >= tmpResult.loaded) ? 'pass' : 'fail';
-
-										if (tmpResult.status === 'pass')
-										{
-											fProgress(`[PASS] ${tmpDatasetName} — verified ${tmpResult.verified} records`);
-										}
-										else
-										{
-											tmpResult.error = `Count mismatch: loaded ${tmpResult.loaded}, verified ${tmpResult.verified}`;
-											fProgress(`[FAIL] ${tmpDatasetName} — ${tmpResult.error}`);
-										}
-									}
-
-									return setImmediate(processNext);
-								});
+							return setImmediate(processNext);
 						});
 				});
 		};
@@ -688,6 +677,82 @@ class ServiceTestOrchestrator extends libFableServiceProviderBase
 				if (tmpLoadedCount === 0)
 				{
 					tmpLoadedCount = pRecords.length;
+				}
+
+				return fCallback(null, tmpLoadedCount, tmpIDDataset);
+			});
+	}
+
+	/**
+	 * Trigger the facto-full-ingest operation on Ultravisor.
+	 * This dispatches parsing to the meadow-integration beacon and
+	 * storage to the Facto beacon, all orchestrated by Ultravisor.
+	 *
+	 * @param {string} pDatasetName — dataset identifier
+	 * @param {string} pFilePath — absolute path to the source data file
+	 * @param {object} pConfig — dataset registry config (format, etc.)
+	 * @param {Function} fCallback — function(pError, pLoadedCount, pIDDataset)
+	 */
+	_triggerFullPipelineIngest(pDatasetName, pFilePath, pConfig, fCallback)
+	{
+		let tmpFormat = (pConfig && pConfig.format) ? pConfig.format : 'csv';
+
+		this._httpPost(`${ULTRAVISOR_BASE}Operation/facto-full-ingest/Trigger`,
+			{
+				Parameters:
+				{
+					DatasetName: pDatasetName,
+					FilePath:    pFilePath,
+					FileFormat:  tmpFormat,
+				},
+				Async: false,
+				TimeoutMs: 300000,
+			},
+			(pError, pBody, pStatus) =>
+			{
+				if (pError)
+				{
+					return fCallback(new Error(`Full pipeline trigger failed: ${pError.message}`));
+				}
+				if (!pBody || !pBody.Success)
+				{
+					let tmpMsg = (pBody && pBody.Errors && pBody.Errors.length > 0)
+						? pBody.Errors.map((e) => e.Message || e).join('; ')
+						: (pBody && pBody.TaskOutputs ? JSON.stringify(pBody.TaskOutputs).substring(0, 200) : `HTTP ${pStatus}`);
+					return fCallback(new Error(`Full pipeline ingest failed: ${tmpMsg}`));
+				}
+
+				// Extract loaded count and IDDataset from operation output
+				let tmpLoadedCount = 0;
+				let tmpIDDataset = 0;
+				let tmpParsedCount = 0;
+				if (pBody.TaskOutputs)
+				{
+					// Parse count from parse-file task
+					if (pBody.TaskOutputs['parse-file'] && pBody.TaskOutputs['parse-file'].Count)
+					{
+						tmpParsedCount = pBody.TaskOutputs['parse-file'].Count;
+						this._emitThroughput('extracted', tmpParsedCount, pDatasetName);
+						this._emitThroughput('transformed', tmpParsedCount, pDatasetName);
+					}
+
+					// Record count from bulk-create task
+					if (pBody.TaskOutputs['bulk-create'] && typeof pBody.TaskOutputs['bulk-create'].Count === 'number')
+					{
+						tmpLoadedCount = pBody.TaskOutputs['bulk-create'].Count;
+					}
+
+					// IDDataset from create-dataset task
+					if (pBody.TaskOutputs['create-dataset'] && pBody.TaskOutputs['create-dataset'].Created)
+					{
+						tmpIDDataset = pBody.TaskOutputs['create-dataset'].Created.IDDataset;
+					}
+				}
+
+				// Fall back to parsed count if loaded count not found
+				if (tmpLoadedCount === 0 && tmpParsedCount > 0)
+				{
+					tmpLoadedCount = tmpParsedCount;
 				}
 
 				return fCallback(null, tmpLoadedCount, tmpIDDataset);
