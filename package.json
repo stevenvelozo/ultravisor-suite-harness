@@ -18,16 +18,16 @@
 		"meadow": "^2.0.33",
 		"meadow-connection-sqlite": "^1.0.18",
 		"meadow-endpoints": "^4.0.14",
-		"meadow-integration": "file:../../meadow/meadow-integration",
+		"meadow-integration": "^1.0.21",
 		"orator": "^6.0.4",
 		"orator-serviceserver-restify": "^2.0.9",
 		"pict": "^1.0.359",
 		"pict-application": "^1.0.33",
 		"pict-view": "^1.0.67",
-		"pict-terminalui": "file:../../pict/pict-terminalui",
-		"retold-facto": "file:../../apps/retold-facto",
-		"ultravisor": "file:../../apps/ultravisor",
-		"ultravisor-beacon": "file:../../fable/ultravisor-beacon"
+		"pict-terminalui": "^0.0.3",
+		"retold-facto": "^0.0.2",
+		"ultravisor": "^1.0.15",
+		"ultravisor-beacon": "^0.0.8"
 	},
 	"license": "MIT",
 	"author": "Steven Velozo <steven@velozo.com>"
