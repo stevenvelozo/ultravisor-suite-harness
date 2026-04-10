@@ -63,7 +63,7 @@ On launch you'll see the **Main Menu** with server status indicators and the cur
 
 | Key | Steps |
 |---|---|
-| `1` Clean & Execute | stop servers → `rm -rf ./data/` → recreate SQLite DBs → restart servers → run suite |
+| `1` Clean & Execute | stop servers -> `rm -rf ./data/` -> recreate SQLite DBs -> restart servers -> run suite |
 | `2` Run Suite | skip the clean step; run the suite against whatever state is already in `./data/` |
 
 Use `1` for a deterministic clean run. Use `2` when you want to iterate quickly on a mapping or operation definition without repaying the startup cost.
@@ -93,10 +93,10 @@ Datasets: datahub-country-codes, datahub-currency-codes
 [OK] Servers running (Facto :8420  Integration :8421  Ultravisor :8422)
 [OK] Harness DB initialized
 
-[1/2] datahub-country-codes — scanning...
-[PASS] datahub-country-codes — verified 248 records
-[2/2] datahub-currency-codes — scanning...
-[PASS] datahub-currency-codes — verified 170 records
+[1/2] datahub-country-codes -- scanning...
+[PASS] datahub-country-codes -- verified 248 records
+[2/2] datahub-currency-codes -- scanning...
+[PASS] datahub-currency-codes -- verified 170 records
 
 === Results ===
   datahub-country-codes    PASS   parsed= 248 loaded= 248 verified= 248

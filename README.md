@@ -4,7 +4,7 @@
 
 ---
 
-An end-to-end test harness for the [Ultravisor](https://github.com/stevenvelozo/ultravisor) / [Facto](https://github.com/stevenvelozo/retold-facto) / [Meadow Integration](https://github.com/stevenvelozo/meadow-integration) data pipeline. The harness boots a full in-process stack (Facto data warehouse, Meadow Integration parser, Ultravisor workflow engine) and drives real-world datasets from the `facto-library` through the `scan → parse → map → transform → load → verify` pipeline, then reports pass/fail per dataset.
+An end-to-end test harness for the [Ultravisor](https://github.com/stevenvelozo/ultravisor) / [Facto](https://github.com/stevenvelozo/retold-facto) / [Meadow Integration](https://github.com/stevenvelozo/meadow-integration) data pipeline. The harness boots a full in-process stack (Facto data warehouse, Meadow Integration parser, Ultravisor workflow engine) and drives real-world datasets from the `facto-library` through the `scan -> parse -> map -> transform -> load -> verify` pipeline, then reports pass/fail per dataset.
 
 The harness ships with a [blessed](https://github.com/chjj/blessed) terminal UI built on top of Pict for interactive development and a `--headless` mode suitable for CI.
 
@@ -12,7 +12,7 @@ The harness ships with a [blessed](https://github.com/chjj/blessed) terminal UI 
 
 - **Full-Stack In-Process** -- Boots Facto (`:8420`), Meadow Integration (`:8421`), and Ultravisor (`:8422`) as Pict child applications in the same Node process
 - **Real Workload Testing** -- Drives ISO codes, IANA TLDs, RAL colors, BLS titles, IEEE OUI, OurAirports, Tiger Census, Project Gutenberg, and more through the full pipeline
-- **Multi-Entity Extraction** -- Bookstore fixture exercises the `TabularTransform` multi-mapping path (one CSV → Book / Author / BookAuthorJoin datasets)
+- **Multi-Entity Extraction** -- Bookstore fixture exercises the `TabularTransform` multi-mapping path (one CSV -> Book / Author / BookAuthorJoin datasets)
 - **Interactive TUI** -- Blessed + Pict layout with main menu, suite runner, results table, dataset picker, and captured server log
 - **Headless Mode** -- `node harness.js --headless --datasets=...` prints progress, results summary, and exits 0/1 for CI
 - **Dataset Presets** -- Small / Medium / Large presets let you scale from 30-second smoke test to multi-minute full sweep

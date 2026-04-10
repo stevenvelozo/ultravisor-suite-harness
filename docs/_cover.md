@@ -2,7 +2,7 @@
 
 > End-to-end pipeline validation for the Ultravisor / Facto / Meadow Integration stack
 
-Boots the full data-pipeline stack in-process and drives real-world datasets through the `scan → parse → map → transform → load → verify` pipeline, reporting pass / fail per dataset in either a blessed terminal UI or a CI-friendly headless mode.
+Boots the full data-pipeline stack in-process and drives real-world datasets through the `scan -> parse -> map -> transform -> load -> verify` pipeline, reporting pass / fail per dataset in either a blessed terminal UI or a CI-friendly headless mode.
 
 - **Full-Stack In-Process** -- Facto, Meadow Integration, and Ultravisor all run as child Pict applications in the same Node
 - **Real Workloads** -- ISO codes, IANA TLDs, RAL colors, IEEE OUI, OurAirports, Tiger Census, Project Gutenberg, and more

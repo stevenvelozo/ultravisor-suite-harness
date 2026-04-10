@@ -55,8 +55,8 @@ Every dataset is registered with a small descriptor:
 {
 	files:         [ 'data/path-relative-to-library.csv' ],
 	format:        'csv' | 'json' | 'tsv' | 'txt',
-	fixtureSource: true  // optional — load from ./fixtures/ instead of facto-library
-	mappings:            // optional — array of mapping descriptors for multi-entity
+	fixtureSource: true  // optional -- load from ./fixtures/ instead of facto-library
+	mappings:            // optional -- array of mapping descriptors for multi-entity
 	[
 		{ file: 'path/to/mapping.json', entity: 'EntityName' }
 	]
@@ -78,7 +78,7 @@ Non-fixture datasets resolve to:
 ./modules/dist/facto-library/<dataset-key>/<file>
 ```
 
-e.g. `datahub-country-codes` → `./modules/dist/facto-library/datahub-country-codes/data/country-codes.csv`.
+e.g. `datahub-country-codes` -> `./modules/dist/facto-library/datahub-country-codes/data/country-codes.csv`.
 
 Fixture datasets (anything with `fixtureSource: true`) resolve to:
 

@@ -19,7 +19,7 @@ graph LR
 | **2. Parse** | `meadow-integration FileParser` | Auto-detect the format (CSV, TSV, JSON, fixed-width), stream the file, emit row objects. |
 | **3. Map** | `meadow-integration` mappings | Apply an identity mapping (default) or one or more JSON mapping descriptors to derive entities. |
 | **4. Transform** | `meadow-integration TabularTransform` | Flatten nested objects and sanitize values into a shape Facto will accept. |
-| **5. Load** | `ultravisor` → `retold-facto` beacons | Dispatch the `facto-ingest` operation; Ultravisor walks the five-step beacon sequence against Facto. |
+| **5. Load** | `ultravisor` -> `retold-facto` beacons | Dispatch the `facto-ingest` operation; Ultravisor walks the five-step beacon sequence against Facto. |
 | **6. Verify** | `Service-TestOrchestrator` | `SELECT COUNT(*)` on the resulting Facto dataset and compare to the parser's count. |
 
 ## Stage 1: Scan
@@ -126,8 +126,8 @@ For multi-entity datasets the orchestrator runs one full Load sequence per mappi
 
 After the load completes, the orchestrator issues a direct `SELECT COUNT(*)` against the resulting Facto dataset's record table. The **verified count** is compared to the parsed count:
 
-- `parsed == loaded == verified` → **PASS**
-- any mismatch → **FAIL**, with the offending counts included in the result row
+- `parsed == loaded == verified` -> **PASS**
+- any mismatch -> **FAIL**, with the offending counts included in the result row
 
 Verification is deliberately independent of the load-stage's self-reported count because that catches a class of failures where the beacon returns success but the rows are not actually queryable (e.g. a silent transaction rollback, a connector bug).
 

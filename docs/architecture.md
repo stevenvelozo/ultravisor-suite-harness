@@ -140,7 +140,7 @@ sequenceDiagram
 	Entry->>Entry: reclaim ports 8420-8422 from stale runs
 	Entry->>Entry: parse CLI args (--headless, --datasets)
 	Entry->>App: new HarnessApplication(options)
-	App->>App: solve() — Pict service initialization
+	App->>App: solve() -- Pict service initialization
 	App->>SM: start()
 	SM->>Facto: spawn Pict child app on :8420
 	Facto-->>SM: ready

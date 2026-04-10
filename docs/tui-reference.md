@@ -31,9 +31,9 @@ Status indicators:
 
 | Indicator | Meaning |
 |---|---|
-| `●` green | Server is healthy |
-| `○` yellow | Server is starting or health-checking |
-| `✗` red | Server failed to start or crashed |
+| `*` green | Server is healthy |
+| `o` yellow | Server is starting or health-checking |
+| `[ ]` red | Server failed to start or crashed |
 
 When every server is green, you can press `1` or `2` to run. Until then, those keys are no-ops and the menu stays on this view.
 
@@ -55,10 +55,10 @@ Each row cycles through states:
 [~] datahub-country-codes              parsing (142 rows)...
 [~] datahub-country-codes              loading...
 [~] datahub-country-codes              verifying...
-[✓] datahub-country-codes              PASS  parsed=248 loaded=248 verified=248
+[[x]] datahub-country-codes              PASS  parsed=248 loaded=248 verified=248
 ```
 
-A failing dataset shows `[✗]` with the failing stage and error text. The runner does not abort on a single failure -- it continues through the full preset and reports everything at the end.
+A failing dataset shows `[[ ]]` with the failing stage and error text. The runner does not abort on a single failure -- it continues through the full preset and reports everything at the end.
 
 When the run completes, the view does **not** automatically jump to the results view. You stay in the runner so you can scroll through the final progress log. Press `3` to see the summary table or `m` to return to the main menu.
 
@@ -116,7 +116,7 @@ A one-line status bar is always visible across the bottom of the screen showing:
 
 - Current view name
 - Elapsed time since harness startup
-- Server status summary (compact `F:● I:● U:●`)
+- Server status summary (compact `F:* I:* U:*`)
 - Hint text for the most relevant keybindings in the current view
 
 ## State Management
