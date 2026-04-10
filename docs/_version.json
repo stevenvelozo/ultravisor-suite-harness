@@ -2,6 +2,6 @@
 	"Name": "ultravisor-suite-harness",
 	"Version": "0.0.1",
 	"Description": "End-to-end test harness for the Ultravisor/Facto pipeline with blessed terminal UI",
-	"GeneratedAt": "2026-04-10T01:50:48.478Z",
-	"GitCommit": "16d6fe9"
+	"GeneratedAt": "2026-04-10T02:06:30.233Z",
+	"GitCommit": "e094ba1"
 }
