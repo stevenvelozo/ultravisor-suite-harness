@@ -1,6 +1,6 @@
 {
 	"name": "ultravisor-suite-harness",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "End-to-end test harness for the Ultravisor/Facto pipeline with blessed terminal UI",
 	"main": "harness.js",
 	"scripts": {
@@ -13,21 +13,21 @@
 	},
 	"dependencies": {
 		"blessed": "^0.1.81",
-		"fable": "^3.1.67",
+		"fable": "^3.1.70",
 		"fable-serviceproviderbase": "^3.0.19",
-		"meadow": "^2.0.33",
+		"meadow": "^2.0.35",
 		"meadow-connection-sqlite": "^1.0.18",
 		"meadow-endpoints": "^4.0.14",
-		"meadow-integration": "^1.0.21",
+		"meadow-integration": "^1.0.32",
 		"orator": "^6.0.4",
-		"orator-serviceserver-restify": "^2.0.9",
-		"pict": "^1.0.359",
+		"orator-serviceserver-restify": "^2.0.10",
+		"pict": "^1.0.363",
 		"pict-application": "^1.0.33",
-		"pict-view": "^1.0.67",
+		"pict-view": "^1.0.68",
 		"pict-terminalui": "^0.0.3",
-		"retold-facto": "^0.0.2",
-		"ultravisor": "^1.0.15",
-		"ultravisor-beacon": "^0.0.8"
+		"retold-facto": "^0.1.0",
+		"ultravisor": "^1.0.23",
+		"ultravisor-beacon": "^0.0.11"
 	},
 	"license": "MIT",
 	"author": "Steven Velozo <steven@velozo.com>"
