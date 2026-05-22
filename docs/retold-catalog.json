@@ -1,97 +1,110 @@
 {
-	"Generated": "2026-04-10T03:21:12.024Z",
+	"Generated": "2026-05-22T05:38:11.207Z",
+	"Mode": "module",
 	"GitHubOrg": "stevenvelozo",
 	"DefaultBranch": "master",
-	"Groups": [
-		{
-			"Name": "Dist",
-			"Key": "dist",
-			"Description": "",
-			"Modules": [
-				{
-					"Name": "indoctrinate_content_staging",
-					"Repo": "indoctrinate_content_staging",
-					"Group": "dist",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				},
-				{
-					"Name": "ultravisor_staging",
-					"Repo": "ultravisor_staging",
-					"Group": "dist",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				}
-			]
-		},
-		{
-			"Name": "Docs",
-			"Key": "docs",
-			"Description": "",
-			"Modules": [
-				{
-					"Name": "css",
-					"Repo": "css",
-					"Group": "docs",
-					"Branch": "master",
-					"HasDocs": true,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": [
-						"css/docuserve.css"
-					]
-				}
-			]
-		},
-		{
-			"Name": "Fixtures",
-			"Key": "fixtures",
-			"Description": "",
-			"Modules": [
-				{
-					"Name": "bookstore",
-					"Repo": "bookstore",
-					"Group": "fixtures",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				}
-			]
-		},
-		{
-			"Name": "Source",
-			"Key": "source",
-			"Description": "",
-			"Modules": [
-				{
-					"Name": "services",
-					"Repo": "services",
-					"Group": "source",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				},
-				{
-					"Name": "views",
-					"Repo": "views",
-					"Group": "source",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				}
-			]
-		}
-	]
+	"Module": {
+		"Name": "ultravisor-suite-harness",
+		"Repo": "ultravisor-suite-harness",
+		"Group": "",
+		"Branch": "master",
+		"HasDocs": true,
+		"HasCover": true,
+		"Sidebar": [
+			{
+				"Title": "Getting Started",
+				"Children": [
+					{
+						"Title": "Overview",
+						"Path": "README.md"
+					},
+					{
+						"Title": "Purpose",
+						"Path": "purpose.md"
+					},
+					{
+						"Title": "Usage",
+						"Path": "usage.md"
+					}
+				]
+			},
+			{
+				"Title": "Reference",
+				"Children": [
+					{
+						"Title": "Architecture",
+						"Path": "architecture.md"
+					},
+					{
+						"Title": "Pipeline",
+						"Path": "pipeline.md"
+					},
+					{
+						"Title": "Datasets",
+						"Path": "datasets.md"
+					},
+					{
+						"Title": "TUI Reference",
+						"Path": "tui-reference.md"
+					}
+				]
+			},
+			{
+				"Title": "Retold Ecosystem",
+				"Children": [
+					{
+						"Title": "Ultravisor",
+						"Path": "apps/ultravisor/README.md"
+					},
+					{
+						"Title": "Ultravisor Beacon",
+						"Path": "utility/ultravisor-beacon/README.md"
+					},
+					{
+						"Title": "Retold Facto",
+						"Path": "meadow/retold-facto/README.md"
+					},
+					{
+						"Title": "Meadow Integration",
+						"Path": "meadow/meadow-integration/README.md"
+					},
+					{
+						"Title": "Meadow",
+						"Path": "meadow/meadow/README.md"
+					},
+					{
+						"Title": "Orator",
+						"Path": "orator/orator/README.md"
+					},
+					{
+						"Title": "Pict",
+						"Path": "pict/pict/README.md"
+					},
+					{
+						"Title": "Fable",
+						"Path": "fable/fable/README.md"
+					}
+				]
+			}
+		],
+		"DocFiles": [
+			".nojekyll",
+			"README.md",
+			"_brand.json",
+			"_cover.md",
+			"_sidebar.md",
+			"_topbar.md",
+			"_version.json",
+			"architecture.md",
+			"datasets.md",
+			"index.html",
+			"pipeline.md",
+			"purpose.md",
+			"retold-catalog.json",
+			"retold-keyword-index.json",
+			"tui-reference.md",
+			"usage.md"
+		]
+	},
+	"Groups": []
 }

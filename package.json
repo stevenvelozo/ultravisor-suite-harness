@@ -23,12 +23,16 @@
 		"orator-serviceserver-restify": "^2.0.11",
 		"pict": "^1.0.368",
 		"pict-application": "^1.0.34",
-		"pict-view": "^1.0.68",
 		"pict-terminalui": "^1.0.0",
+		"pict-view": "^1.0.68",
 		"retold-facto": "^1.0.0",
 		"ultravisor": "^1.3.9",
 		"ultravisor-beacon": "^1.0.0"
 	},
 	"license": "MIT",
-	"author": "Steven Velozo <steven@velozo.com>"
+	"author": "Steven Velozo <steven@velozo.com>",
+	"devDependencies": {
+		"pict-docuserve": "^1.3.3",
+		"quackage": "^1.2.4"
+	}
 }
