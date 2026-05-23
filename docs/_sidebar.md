@@ -13,11 +13,11 @@
 
 - Retold Ecosystem
 
-  - [Ultravisor](/apps/ultravisor/)
-  - [Ultravisor Beacon](/utility/ultravisor-beacon/)
-  - [Retold Facto](/meadow/retold-facto/)
-  - [Meadow Integration](/meadow/meadow-integration/)
-  - [Meadow](/meadow/meadow/)
-  - [Orator](/orator/orator/)
-  - [Pict](/pict/pict/)
-  - [Fable](/fable/fable/)
+  - [Ultravisor](https://stevenvelozo.github.io/ultravisor/)
+  - [Ultravisor Beacon](https://stevenvelozo.github.io/ultravisor-beacon/)
+  - [Retold Facto](https://stevenvelozo.github.io/retold-facto/)
+  - [Meadow Integration](https://stevenvelozo.github.io/meadow-integration/)
+  - [Meadow](https://stevenvelozo.github.io/meadow/)
+  - [Orator](https://stevenvelozo.github.io/orator/)
+  - [Pict](https://stevenvelozo.github.io/pict/)
+  - [Fable](https://stevenvelozo.github.io/fable/)
