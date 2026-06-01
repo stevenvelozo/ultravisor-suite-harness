@@ -1,7 +1,7 @@
 {
-	"Generated": "2026-05-22T05:38:11.207Z",
+	"Generated": "2026-06-01T03:51:29.533Z",
 	"Mode": "module",
-	"GitHubOrg": "stevenvelozo",
+	"GitHubOrg": "fable-retold",
 	"DefaultBranch": "master",
 	"Module": {
 		"Name": "ultravisor-suite-harness",
@@ -54,35 +54,35 @@
 				"Children": [
 					{
 						"Title": "Ultravisor",
-						"Path": "apps/ultravisor/README.md"
+						"Path": "https://stevenvelozo.github.io/ultravisor/README.md"
 					},
 					{
 						"Title": "Ultravisor Beacon",
-						"Path": "utility/ultravisor-beacon/README.md"
+						"Path": "https://stevenvelozo.github.io/ultravisor-beacon/README.md"
 					},
 					{
 						"Title": "Retold Facto",
-						"Path": "meadow/retold-facto/README.md"
+						"Path": "https://stevenvelozo.github.io/retold-facto/README.md"
 					},
 					{
 						"Title": "Meadow Integration",
-						"Path": "meadow/meadow-integration/README.md"
+						"Path": "https://stevenvelozo.github.io/meadow-integration/README.md"
 					},
 					{
 						"Title": "Meadow",
-						"Path": "meadow/meadow/README.md"
+						"Path": "https://stevenvelozo.github.io/meadow/README.md"
 					},
 					{
 						"Title": "Orator",
-						"Path": "orator/orator/README.md"
+						"Path": "https://stevenvelozo.github.io/orator/README.md"
 					},
 					{
 						"Title": "Pict",
-						"Path": "pict/pict/README.md"
+						"Path": "https://stevenvelozo.github.io/pict/README.md"
 					},
 					{
 						"Title": "Fable",
-						"Path": "fable/fable/README.md"
+						"Path": "https://stevenvelozo.github.io/fable/README.md"
 					}
 				]
 			}
