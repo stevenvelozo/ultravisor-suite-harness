@@ -2,7 +2,7 @@
 
 > **[Read the Ultravisor-Suite-Harness Documentation](https://stevenvelozo.github.io/ultravisor-suite-harness/)** - interactive docs with the full API reference.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[MIT License](LICENSE)
 
 ---
 
