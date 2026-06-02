@@ -4,14 +4,8 @@ For each dataset the harness runs a six-stage pipeline. A dataset passes only wh
 
 ## The Six Stages
 
-```mermaid
-graph LR
-	A[1. Scan] --> B[2. Parse]
-	B --> C[3. Map]
-	C --> D[4. Transform]
-	D --> E[5. Load]
-	E --> F[6. Verify]
-```
+<!-- bespoke diagram: edit diagrams/the-six-stages.mmd or .hints.json, then: npx pict-renderer-graph build modules/apps/ultravisor-suite-harness/docs -->
+![The Six Stages](diagrams/the-six-stages.svg)
 
 | Stage | Owner | What Happens |
 |---|---|---|
@@ -98,25 +92,8 @@ Its output is the **transformed count** -- usually equal to the parsed count, ex
 
 The load stage is where the harness actually exercises Ultravisor workflow dispatch. The orchestrator sends an HTTP POST to Ultravisor (`http://localhost:8422/operations/facto-ingest`) with the transformed records as the payload. Ultravisor reads `operations/facto-ingest.json` and dispatches a five-step sequence of beacon calls against Facto:
 
-```mermaid
-sequenceDiagram
-	participant Orch as TestOrchestrator
-	participant Ultra as Ultravisor
-	participant Facto
-
-	Orch->>Ultra: POST /operations/facto-ingest { records }
-	Ultra->>Facto: beacon-factodata-createsource
-	Facto-->>Ultra: Source ID
-	Ultra->>Facto: beacon-factodata-createdataset
-	Facto-->>Ultra: Dataset ID
-	Ultra->>Facto: beacon-factodata-createingestjob
-	Facto-->>Ultra: IngestJob ID
-	Ultra->>Facto: beacon-factodata-bulkcreaterecords
-	Facto-->>Ultra: Loaded count
-	Ultra->>Facto: beacon-factodata-updateingestjob (status=complete)
-	Facto-->>Ultra: OK
-	Ultra-->>Orch: operation result (loaded count)
-```
+<!-- bespoke diagram: edit diagrams/stage-5-load.mmd or .hints.json, then: npx pict-renderer-graph build modules/apps/ultravisor-suite-harness/docs -->
+![Stage 5: Load](diagrams/stage-5-load.svg)
 
 The **loaded count** is what Facto reports back from the bulk-create step. A dataset where loaded < parsed has hit a beacon-side failure -- usually a schema mismatch or a record that Facto's validation rejected.
 

@@ -4,54 +4,8 @@ The harness is a single Node process that hosts three in-process Retold servers,
 
 ## Process Layout
 
-```mermaid
-graph TB
-	subgraph "Node Process (harness.js)"
-		ENTRY["harness.js<br/>entry point"]
-		CAPTURE["Console capture<br/>(stdout/stderr buffer)"]
-		APP["Harness-Application<br/>(Pict application)"]
-
-		subgraph "Services"
-			SERVERS["Service-ServerManager"]
-			ORCH["Service-TestOrchestrator"]
-			DATA["Service-DataManager"]
-		end
-
-		subgraph "Views (blessed + Pict)"
-			MAIN["View-MainMenu"]
-			RUN["View-SuiteRunner"]
-			RESULTS["View-Results"]
-			PICKER["View-DatasetPicker"]
-			LOG["View-Log"]
-		end
-
-		subgraph "Child Pict Applications"
-			FACTO["Facto Server<br/>:8420"]
-			INTEG["Integration Server<br/>:8421"]
-			ULTRA["Ultravisor Server<br/>:8422"]
-		end
-	end
-
-	ENTRY --> CAPTURE
-	ENTRY --> APP
-	APP --> SERVERS
-	APP --> ORCH
-	APP --> DATA
-	APP --> MAIN
-	APP --> RUN
-	APP --> RESULTS
-	APP --> PICKER
-	APP --> LOG
-
-	SERVERS -->|starts| FACTO
-	SERVERS -->|starts| INTEG
-	SERVERS -->|starts| ULTRA
-
-	ORCH -->|HTTP dispatch| ULTRA
-	ULTRA -->|beacon dispatch| FACTO
-	ULTRA -->|beacon dispatch| INTEG
-	ORCH -->|records| DATA
-```
+<!-- bespoke diagram: edit diagrams/process-layout.mmd or .hints.json, then: npx pict-renderer-graph build modules/apps/ultravisor-suite-harness/docs -->
+![Process Layout](diagrams/process-layout.svg)
 
 ## Three-Server Stack
 
@@ -125,78 +79,13 @@ classDiagram
 
 ## Startup Sequence
 
-```mermaid
-sequenceDiagram
-	participant User
-	participant Entry as harness.js
-	participant App as HarnessApplication
-	participant SM as ServerManager
-	participant Facto
-	participant Integ as Integration
-	participant Ultra as Ultravisor
-
-	User->>Entry: node harness.js [--headless]
-	Entry->>Entry: capture stdout/stderr into ring buffer
-	Entry->>Entry: reclaim ports 8420-8422 from stale runs
-	Entry->>Entry: parse CLI args (--headless, --datasets)
-	Entry->>App: new HarnessApplication(options)
-	App->>App: solve() -- Pict service initialization
-	App->>SM: start()
-	SM->>Facto: spawn Pict child app on :8420
-	Facto-->>SM: ready
-	SM->>Integ: spawn Pict child app on :8421
-	Integ-->>SM: ready
-	SM->>Ultra: spawn Pict child app on :8422
-	Ultra-->>SM: ready
-	Ultra->>Facto: beacon handshake
-	Ultra->>Integ: beacon handshake
-	SM-->>App: all servers healthy
-	alt Interactive mode
-		App->>App: render MainMenu in blessed screen
-		App->>User: awaiting keypress
-	else Headless mode
-		App->>App: runSuite(options.datasets) directly
-	end
-```
+<!-- bespoke diagram: edit diagrams/startup-sequence.mmd or .hints.json, then: npx pict-renderer-graph build modules/apps/ultravisor-suite-harness/docs -->
+![Startup Sequence](diagrams/startup-sequence.svg)
 
 ## Run-Suite Flow
 
-```mermaid
-sequenceDiagram
-	participant App as HarnessApplication
-	participant Orch as TestOrchestrator
-	participant DM as DataManager
-	participant Ultra as Ultravisor
-	participant Facto
-	participant Integ as Integration
-
-	App->>Orch: runSuite(datasets)
-	Orch->>DM: recordRun(startTime, preset)
-	loop for each dataset
-		Orch->>Orch: DATASET_REGISTRY[name]
-		Orch->>Orch: scan file on disk
-		Orch->>Orch: FileParser streams rows (parsed count)
-		alt single-entity
-			Orch->>Ultra: POST /operations/facto-ingest
-		else multi-entity (bookstore)
-			loop for each mapping
-				Orch->>Integ: TabularTransform comprehend + flatten
-				Orch->>Ultra: POST /operations/facto-ingest
-			end
-		end
-		Ultra->>Facto: beacon-factodata-createsource
-		Ultra->>Facto: beacon-factodata-createdataset
-		Ultra->>Facto: beacon-factodata-createingestjob
-		Ultra->>Facto: beacon-factodata-bulkcreaterecords
-		Ultra->>Facto: beacon-factodata-updateingestjob
-		Orch->>Facto: SELECT COUNT(*) (verified count)
-		Orch->>Orch: compare parsed == verified
-		Orch->>DM: recordResult(dataset, status, counts)
-		Orch-->>App: progress update (for SuiteRunner view)
-	end
-	Orch-->>App: run complete
-	App->>App: switchView('Results') or print summary
-```
+<!-- bespoke diagram: edit diagrams/run-suite-flow.mmd or .hints.json, then: npx pict-renderer-graph build modules/apps/ultravisor-suite-harness/docs -->
+![Run-Suite Flow](diagrams/run-suite-flow.svg)
 
 ## File Layout
 

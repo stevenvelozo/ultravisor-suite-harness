@@ -1,0 +1,17 @@
+sequenceDiagram
+	participant Orch as TestOrchestrator
+	participant Ultra as Ultravisor
+	participant Facto
+
+	Orch->>Ultra: POST /operations/facto-ingest { records }
+	Ultra->>Facto: beacon-factodata-createsource
+	Facto-->>Ultra: Source ID
+	Ultra->>Facto: beacon-factodata-createdataset
+	Facto-->>Ultra: Dataset ID
+	Ultra->>Facto: beacon-factodata-createingestjob
+	Facto-->>Ultra: IngestJob ID
+	Ultra->>Facto: beacon-factodata-bulkcreaterecords
+	Facto-->>Ultra: Loaded count
+	Ultra->>Facto: beacon-factodata-updateingestjob (status=complete)
+	Facto-->>Ultra: OK
+	Ultra-->>Orch: operation result (loaded count)

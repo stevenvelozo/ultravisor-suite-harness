@@ -1,0 +1,46 @@
+graph TB
+	subgraph "Node Process (harness.js)"
+		ENTRY["harness.js<br/>entry point"]
+		CAPTURE["Console capture<br/>(stdout/stderr buffer)"]
+		APP["Harness-Application<br/>(Pict application)"]
+
+		subgraph "Services"
+			SERVERS["Service-ServerManager"]
+			ORCH["Service-TestOrchestrator"]
+			DATA["Service-DataManager"]
+		end
+
+		subgraph "Views (blessed + Pict)"
+			MAIN["View-MainMenu"]
+			RUN["View-SuiteRunner"]
+			RESULTS["View-Results"]
+			PICKER["View-DatasetPicker"]
+			LOG["View-Log"]
+		end
+
+		subgraph "Child Pict Applications"
+			FACTO["Facto Server<br/>:8420"]
+			INTEG["Integration Server<br/>:8421"]
+			ULTRA["Ultravisor Server<br/>:8422"]
+		end
+	end
+
+	ENTRY --> CAPTURE
+	ENTRY --> APP
+	APP --> SERVERS
+	APP --> ORCH
+	APP --> DATA
+	APP --> MAIN
+	APP --> RUN
+	APP --> RESULTS
+	APP --> PICKER
+	APP --> LOG
+
+	SERVERS -->|starts| FACTO
+	SERVERS -->|starts| INTEG
+	SERVERS -->|starts| ULTRA
+
+	ORCH -->|HTTP dispatch| ULTRA
+	ULTRA -->|beacon dispatch| FACTO
+	ULTRA -->|beacon dispatch| INTEG
+	ORCH -->|records| DATA

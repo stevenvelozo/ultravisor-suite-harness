@@ -1,0 +1,34 @@
+sequenceDiagram
+	participant App as HarnessApplication
+	participant Orch as TestOrchestrator
+	participant DM as DataManager
+	participant Ultra as Ultravisor
+	participant Facto
+	participant Integ as Integration
+
+	App->>Orch: runSuite(datasets)
+	Orch->>DM: recordRun(startTime, preset)
+	loop for each dataset
+		Orch->>Orch: DATASET_REGISTRY[name]
+		Orch->>Orch: scan file on disk
+		Orch->>Orch: FileParser streams rows (parsed count)
+		alt single-entity
+			Orch->>Ultra: POST /operations/facto-ingest
+		else multi-entity (bookstore)
+			loop for each mapping
+				Orch->>Integ: TabularTransform comprehend + flatten
+				Orch->>Ultra: POST /operations/facto-ingest
+			end
+		end
+		Ultra->>Facto: beacon-factodata-createsource
+		Ultra->>Facto: beacon-factodata-createdataset
+		Ultra->>Facto: beacon-factodata-createingestjob
+		Ultra->>Facto: beacon-factodata-bulkcreaterecords
+		Ultra->>Facto: beacon-factodata-updateingestjob
+		Orch->>Facto: SELECT COUNT(*) (verified count)
+		Orch->>Orch: compare parsed == verified
+		Orch->>DM: recordResult(dataset, status, counts)
+		Orch-->>App: progress update (for SuiteRunner view)
+	end
+	Orch-->>App: run complete
+	App->>App: switchView('Results') or print summary
