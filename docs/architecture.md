@@ -89,48 +89,8 @@ classDiagram
 
 ## File Layout
 
-```
-ultravisor-suite-harness/
-├── harness.js                          # Entry point: capture, cleanup, bootstrap
-├── package.json
-├── README.md
-├── source/
-│   ├── Harness-Application.js          # Pict application, navigation, presets
-│   ├── services/
-│   │   ├── Service-ServerManager.js    # Three-server lifecycle
-│   │   ├── Service-TestOrchestrator.js # DATASET_REGISTRY + per-dataset pipeline
-│   │   └── Service-DataManager.js      # ./data and harness.db management
-│   └── views/
-│       ├── View-MainMenu.js            # Main menu with status
-│       ├── View-SuiteRunner.js         # Live progress while running
-│       ├── View-Results.js             # Pass/fail summary table
-│       ├── View-DatasetPicker.js       # Preset + dataset selection
-│       └── View-Log.js                 # Captured server output
-├── operations/
-│   ├── facto-ingest.json               # Five-step ingest workflow
-│   ├── facto-full-ingest.json
-│   ├── facto-projection-import.json
-│   └── facto-projection-deploy.json
-├── fixtures/
-│   ├── books.csv                       # 130k+ row multi-entity source
-│   ├── books-variant.csv
-│   └── bookstore/
-│       ├── mapping_books_book.json
-│       ├── mapping_books_author.json
-│       └── mapping_books_BookAuthorJoin.json
-├── test/
-│   └── validate-harness.js             # External headless runner
-├── docs/
-│   ├── README.md
-│   ├── _cover.md, _sidebar.md, _topbar.md
-│   ├── purpose.md
-│   ├── usage.md
-│   ├── architecture.md
-│   ├── pipeline.md
-│   ├── datasets.md
-│   └── tui-reference.md
-└── data/                               # runtime, git-ignored
-```
+<!-- bespoke diagram: edit diagrams/file-layout.mmd or .hints.json, then: npx pict-renderer-graph build modules/apps/ultravisor-suite-harness/docs -->
+![File Layout](diagrams/file-layout.svg)
 
 ## Console Capture
 
