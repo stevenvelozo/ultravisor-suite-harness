@@ -3,6 +3,12 @@
 	"version": "1.0.0",
 	"description": "End-to-end test harness for the Ultravisor/Facto pipeline with blessed terminal UI",
 	"main": "harness.js",
+	"files": [
+		"harness.js",
+		"source",
+		"fixtures",
+		"operations"
+	],
 	"scripts": {
 		"start": "node harness.js",
 		"headless": "node harness.js --headless",
