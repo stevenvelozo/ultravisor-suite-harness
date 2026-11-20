@@ -1,6 +1,6 @@
 {
 	"name": "ultravisor-suite-harness",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"description": "End-to-end test harness for the Ultravisor/Facto pipeline with blessed terminal UI",
 	"main": "harness.js",
 	"files": [
